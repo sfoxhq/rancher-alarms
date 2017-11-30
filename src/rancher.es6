@@ -4,6 +4,8 @@ import {merge, omit} from 'lodash';
 import $url from 'url';
 
 export default class RancherClient {
+  // declare variable to store number of errors
+
   constructor({address, version='v1', url, protocol='http', auth, projectId}) {
     if (auth) {
       assert(auth.accessKey, '`auth.accessKey` is missing');
@@ -44,9 +46,11 @@ export default class RancherClient {
         responseType: 'json'
       }));
 
+      // reset counter to 0 before returning
       return res.data
     }
     catch (resp) {
+      // dont throw, use info or warn and update counter
       throw new Error('RancherClientError: non-200 code response ' + JSON.stringify(resp, null, 4));
     }
   }
