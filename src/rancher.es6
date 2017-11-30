@@ -1,9 +1,12 @@
 import axios from 'axios';
 import assert from 'assert';
 import {merge, omit} from 'lodash';
+import {info} from './log';
 import $url from 'url';
 
 export default class RancherClient {
+  var rancherClientErrorCount = 0;
+
   constructor({address, version='v1', url, protocol='http', auth, projectId}) {
     if (auth) {
       assert(auth.accessKey, '`auth.accessKey` is missing');
@@ -44,10 +47,17 @@ export default class RancherClient {
         responseType: 'json'
       }));
 
+      this.rancherClientErrorCount = 0;
       return res.data
     }
     catch (resp) {
-      throw new Error('RancherClientError: non-200 code response ' + JSON.stringify(resp, null, 4));
+      if (this.rancherClientErrorCount <= 5) {
+        info('RancherClientError: non-200 code response ' + JSON.stringify(resp, null, 4));
+        this.rancherClientErrorCount += 1;
+      } else {
+        this.rancherClientErrorCount = 0;
+        throw new Error('RancherClientError: non-200 code response ' + JSON.stringify(resp, null, 4));
+      }
     }
   }
 
