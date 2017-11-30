@@ -1,10 +1,11 @@
 import axios from 'axios';
 import assert from 'assert';
 import {merge, omit} from 'lodash';
+import {info} from './log';
 import $url from 'url';
 
 export default class RancherClient {
-  // declare variable to store number of errors
+  var rancherClientErrorCount = 0;
 
   constructor({address, version='v1', url, protocol='http', auth, projectId}) {
     if (auth) {
@@ -46,12 +47,17 @@ export default class RancherClient {
         responseType: 'json'
       }));
 
-      // reset counter to 0 before returning
+      this.rancherClientErrorCount = 0;
       return res.data
     }
     catch (resp) {
-      // dont throw, use info or warn and update counter
-      throw new Error('RancherClientError: non-200 code response ' + JSON.stringify(resp, null, 4));
+      if (this.rancherClientErrorCount <= 5) {
+        info('RancherClientError: non-200 code response ' + JSON.stringify(resp, null, 4));
+        this.rancherClientErrorCount += 1;
+      } else {
+        this.rancherClientErrorCount = 0;
+        throw new Error('RancherClientError: non-200 code response ' + JSON.stringify(resp, null, 4));
+      }
     }
   }
 
